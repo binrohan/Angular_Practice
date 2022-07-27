@@ -6,6 +6,7 @@ import {
   Output,
   ViewChild,
 } from "@angular/core";
+import { ActivatedRoute } from "@angular/router";
 import { Ingredient } from "src/app/shared/ingredient.model";
 import { ShoppingListService } from "../shopping-list.service";
 
