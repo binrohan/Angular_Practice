@@ -1,7 +1,10 @@
-import { Component, OnInit } from "@angular/core";
+import { Placeholder } from "@angular/compiler/src/i18n/i18n_ast";
+import { Component, ComponentFactoryResolver, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { NgForm } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
-import { Observable } from "rxjs";
+import { Observable, Subscription } from "rxjs";
+import { AlertComponent } from "../shared/alert/alert.component";
+import { PlaceholderDirective } from "../shared/placeholder.directive";
 import { AuthResponseData, AuthService } from "./auth.service";
 
 @Component({
@@ -9,14 +12,27 @@ import { AuthResponseData, AuthService } from "./auth.service";
   templateUrl: "./auth.component.html",
   styleUrls: ["./auth.component.css"],
 })
-export class AuthComponent implements OnInit {
+export class AuthComponent implements OnInit, OnDestroy {
+  @ViewChild(PlaceholderDirective, {static: false}) alertHost: PlaceholderDirective
   isLoginMode = true;
   isLoading = false;
   error: string = null;
+  subs: Subscription;
 
-  constructor(private authService: AuthService, private router: Router, private route: ActivatedRoute) {}
-
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private componentFactoryResolver: ComponentFactoryResolver
+  ) {}
+  
   ngOnInit(): void {}
+
+  ngOnDestroy(): void {
+    if(this.subs){
+      this.subs.unsubscribe();
+    }
+  }
+
 
   onSwitchMode() {
     this.isLoginMode = !this.isLoginMode;
@@ -41,14 +57,33 @@ export class AuthComponent implements OnInit {
     authObs.subscribe(
       (res) => {
         this.isLoading = false;
-        this.router.navigate(['/recipes']);
+        this.router.navigate(["/recipes"]);
       },
       (error) => {
         this.error = error;
         this.isLoading = false;
+        this.showErrorAlert(error);
       }
     );
 
     form.reset();
+  }
+
+  onHandleError() {
+    this.error = null;
+  }
+
+  private showErrorAlert(message: string) {
+    const alertComponentFactory =
+      this.componentFactoryResolver.resolveComponentFactory(AlertComponent);
+
+    const hostViewContainerRef = this.alertHost.viewContainerRef;
+    hostViewContainerRef.clear();
+    const componentRef = hostViewContainerRef.createComponent(alertComponentFactory); 
+    componentRef.instance.message = message;
+    const subs = componentRef.instance.close.subscribe(() => {
+      this.subs.unsubscribe();
+      hostViewContainerRef.clear();
+    });   
   }
 }
