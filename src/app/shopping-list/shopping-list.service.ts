@@ -12,7 +12,7 @@ export class ShoppingListService {
   //   new Ingredient('Apples', 5),
   //   new Ingredient('Tomatoes', 10)
   // ];
-  private ingredients: Ingredient[];
+  private ingredients: Ingredient[] = [];
 
   constructor() { }
 
