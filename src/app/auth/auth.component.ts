@@ -1,52 +1,50 @@
-import { Placeholder } from "@angular/compiler/src/i18n/i18n_ast";
-import { Component, ComponentFactoryResolver, OnDestroy, OnInit, ViewChild } from "@angular/core";
-import { NgForm } from "@angular/forms";
-import { ActivatedRoute, Router } from "@angular/router";
-import { Observable, Subscription } from "rxjs";
-import { AlertComponent } from "../shared/alert/alert.component";
-import { PlaceholderDirective } from "../shared/placeholder.directive";
-import { AuthResponseData, AuthService } from "./auth.service";
+import {
+  Component,
+  ComponentFactoryResolver,
+  ViewChild,
+  OnDestroy
+} from '@angular/core';
+import { NgForm } from '@angular/forms';
+import { AuthService, AuthResponseData } from './auth.service';
+import { Observable, Subscription } from 'rxjs';
+import { Router } from '@angular/router';
+import { AlertComponent } from '../shared/alert/alert.component';
+import { PlaceholderDirective } from '../shared/placeholder.directive';
 
 @Component({
-  selector: "app-auth",
-  templateUrl: "./auth.component.html",
-  styleUrls: ["./auth.component.css"],
+  selector: 'app-auth',
+  templateUrl: './auth.component.html'
 })
-export class AuthComponent implements OnInit, OnDestroy {
-  @ViewChild(PlaceholderDirective, {static: false}) alertHost: PlaceholderDirective
+export class AuthComponent implements OnDestroy {
   isLoginMode = true;
   isLoading = false;
   error: string = null;
-  subs: Subscription;
+  @ViewChild(PlaceholderDirective, { static: false })
+  alertHost: PlaceholderDirective;
+
+  private closeSub: Subscription;
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private componentFactoryResolver: ComponentFactoryResolver
   ) {}
-  
-  ngOnInit(): void {}
-
-  ngOnDestroy(): void {
-    if(this.subs){
-      this.subs.unsubscribe();
-    }
-  }
-
 
   onSwitchMode() {
     this.isLoginMode = !this.isLoginMode;
   }
 
   onSubmit(form: NgForm) {
-    if (!form.valid) return;
+    if (!form.valid) {
+      return;
+    }
 
-    const email = form.value["email"];
-    const password = form.value["password"];
+    const { email, password } = form.value;
 
     let authObs: Observable<AuthResponseData>;
 
     this.isLoading = true;
+    this.error = null;
 
     if (this.isLoginMode) {
       authObs = this.authService.login(email, password);
@@ -55,14 +53,14 @@ export class AuthComponent implements OnInit, OnDestroy {
     }
 
     authObs.subscribe(
-      (res) => {
+      response => {
         this.isLoading = false;
-        this.router.navigate(["/recipes"]);
+        this.router.navigate(['./recipes']);
       },
-      (error) => {
-        this.error = error;
+      errorMessage => {
+        this.error = errorMessage;
+        this.showErrorAlert(errorMessage);
         this.isLoading = false;
-        this.showErrorAlert(error);
       }
     );
 
@@ -73,17 +71,29 @@ export class AuthComponent implements OnInit, OnDestroy {
     this.error = null;
   }
 
-  private showErrorAlert(message: string) {
-    const alertComponentFactory =
-      this.componentFactoryResolver.resolveComponentFactory(AlertComponent);
+  ngOnDestroy() {
+    if (this.closeSub) {
+      this.closeSub.unsubscribe();
+    }
+  }
+
+  private showErrorAlert(errorMessage: string) {
+    // const alertComponent = new AlertComponent(); wont work
+    const alertComponentFactory = this.componentFactoryResolver.resolveComponentFactory(
+      AlertComponent
+    );
 
     const hostViewContainerRef = this.alertHost.viewContainerRef;
     hostViewContainerRef.clear();
-    const componentRef = hostViewContainerRef.createComponent(alertComponentFactory); 
-    componentRef.instance.message = message;
-    const subs = componentRef.instance.close.subscribe(() => {
-      this.subs.unsubscribe();
+
+    const componentRef = hostViewContainerRef.createComponent(
+      alertComponentFactory
+    );
+
+    componentRef.instance.message = errorMessage;
+    this.closeSub = componentRef.instance.close.subscribe(() => {
+      this.closeSub.unsubscribe();
       hostViewContainerRef.clear();
-    });   
+    });
   }
 }
