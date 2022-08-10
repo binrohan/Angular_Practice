@@ -1,8 +1,13 @@
 import { Component, Input, OnInit } from "@angular/core";
 import { ActivatedRoute, Params, Router } from "@angular/router";
+import { Store } from "@ngrx/store";
+import { Ingredient } from "src/app/shared/ingredient.model";
 import { ShoppingListService } from "src/app/shopping-list/shopping-list.service";
 import { RecipeService } from "../recipe-list/recipe.service";
 import { Recipe } from "../recipe.model";
+import * as ShoppingListActions from "src/app/shopping-list/store/shopping-list.actions";
+import { State } from "src/app/shopping-list/store/shopping-list.reducer";
+import * as fromShoppingList from '../../shopping-list/store/shopping-list.reducer';
 
 @Component({
   selector: "app-recipe-details",
@@ -17,7 +22,8 @@ export class RecipeDetailsComponent implements OnInit {
     private shoppingListService: ShoppingListService,
     private route: ActivatedRoute,
     private router: Router,
-    private recipeService: RecipeService
+    private recipeService: RecipeService,
+    private store: Store<fromShoppingList.AppState>
   ) {}
 
   ngOnInit(): void {
@@ -28,16 +34,19 @@ export class RecipeDetailsComponent implements OnInit {
   }
 
   onAddToShoppingLIst() {
-    this.shoppingListService.addIngredients(this.recipe.ingredients);
+    // this.shoppingListService.addIngredients(this.recipe.ingredients);
+    this.store.dispatch(
+      new ShoppingListActions.AddIngredients(this.recipe.ingredients)
+    );
   }
 
-  onEditRecipe(){
-    this.router.navigate(['edit'], {relativeTo: this.route});
+  onEditRecipe() {
+    this.router.navigate(["edit"], { relativeTo: this.route });
     // this.router.navigate(['../', this.id, 'edit'], {relativeTo: this.route});
   }
 
-  onDelete(){
+  onDelete() {
     this.recipeService.delete(this.id);
-    this.router.navigate(['/recipes']);
+    this.router.navigate(["/recipes"]);
   }
 }
