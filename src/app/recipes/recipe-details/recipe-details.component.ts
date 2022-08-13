@@ -1,12 +1,11 @@
-import { Component, Input, OnInit } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import { ActivatedRoute, Params, Router } from "@angular/router";
 import { Store } from "@ngrx/store";
-import { Ingredient } from "src/app/shared/ingredient.model";
-import { ShoppingListService } from "src/app/shopping-list/shopping-list.service";
-import { RecipeService } from "../recipe-list/recipe.service";
 import { Recipe } from "../recipe.model";
 import * as ShoppingListActions from "src/app/shopping-list/store/shopping-list.actions";
 import * as fromApp from "src/app/store/app.reducer";
+import { map, switchMap, tap } from "rxjs/operators";
+import * as RecipeActions from "../store/recipe.actions";
 
 @Component({
   selector: "app-recipe-details",
@@ -18,18 +17,20 @@ export class RecipeDetailsComponent implements OnInit {
   id: number;
 
   constructor(
-    private shoppingListService: ShoppingListService,
     private route: ActivatedRoute,
     private router: Router,
-    private recipeService: RecipeService,
     private store: Store<fromApp.AppState>
   ) {}
 
   ngOnInit(): void {
-    this.route.params.subscribe((params: Params) => {
-      this.id = +params["id"];
-      this.recipe = this.recipeService.getRecipe(this.id);
-    });
+    this.route.params.pipe(
+      map(params => +params["id"]),
+      switchMap(id => {
+        this.id = id;
+        return this.store.select('recipe');
+      }),
+      map(recipeState => recipeState.recipes.find((r, index) => index === this.id))
+    ).subscribe(recipe => this.recipe = recipe);
   }
 
   onAddToShoppingLIst() {
@@ -45,7 +46,8 @@ export class RecipeDetailsComponent implements OnInit {
   }
 
   onDelete() {
-    this.recipeService.delete(this.id);
+    // this.recipeService.delete(this.id);
+    this.store.dispatch(new RecipeActions.DeleteRecipe(this.id));
     this.router.navigate(["/recipes"]);
   }
 }

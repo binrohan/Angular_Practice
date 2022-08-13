@@ -7,6 +7,7 @@ import { Store } from "@ngrx/store";
 import { Subscription } from "rxjs";
 import { map } from "rxjs/operators";
 import * as AuthActions from "../auth/store/auth.actions";
+import * as RecipesActions from "../recipes/store/recipe.actions";
 import { DataStorageService } from "../shared/data-storage.service";
 import * as fromApp from "../store/app.reducer";
 
@@ -37,11 +38,13 @@ ngOnInit(): void {
   }
 
   onStore() {
-    this.dataStorageService.storeRecipe();
+    // this.dataStorageService.storeRecipe();
+    this.store.dispatch(new RecipesActions.StoreRecipes());
   }
 
   onFetch() {
-    this.dataStorageService.fetchRecipes().subscribe();
+    // this.dataStorageService.fetchRecipes().subscribe();
+    this.store.dispatch(new RecipesActions.FetchRecipes());
   }
 
   onLogout() {
