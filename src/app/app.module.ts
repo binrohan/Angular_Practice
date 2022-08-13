@@ -15,11 +15,12 @@ import { EffectsModule } from "@ngrx/effects";
 import { AuthEffects } from "./auth/store/auth.effects";
 import { environment } from "../environments/environment";
 import { RecipeEffects } from "./recipes/store/recipe.effects";
+import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 
 @NgModule({
   declarations: [AppComponent, HeaderComponent],
   imports: [
-    BrowserModule,
+    BrowserModule.withServerTransition({ appId: 'serverApp' }),
     HttpClientModule,
     AppRoutingModule,
     SharedModule,
@@ -27,7 +28,8 @@ import { RecipeEffects } from "./recipes/store/recipe.effects";
     StoreModule.forRoot(fromApp.appReducer),
     EffectsModule.forRoot([AuthEffects, RecipeEffects]),
     StoreDevtoolsModule.instrument({logOnly: environment.production}), 
-    StoreRouterConnectingModule.forRoot()
+    StoreRouterConnectingModule.forRoot(),
+    BrowserAnimationsModule
   ],
   providers: [
     /*LoggingService*/
